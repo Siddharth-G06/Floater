@@ -4,8 +4,8 @@ import re
 import sys
 import os
 
-# Fix import path
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+# Fix import path (look one level up to find 'models')
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from models.schemas import ExtractedReceipt
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { LogOut, Activity, MessageSquare, CreditCard, ReceiptText } from 'lucide-react';
+import { LogOut, Activity, MessageSquare, CreditCard, ReceiptText, ShieldCheck } from 'lucide-react';
 import Button from '../components/ui/Button';
 import AddPaymentForm from '../components/forms/AddPaymentForm';
 import DocumentUpload from '../components/forms/DocumentUpload';
@@ -174,24 +174,40 @@ export default function Dashboard() {
           <span>Simulation Tools</span>
         </h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Situation Simulation Card */}
           <div className="bg-gradient-to-br from-[#1e1e1e] to-[#2c2c2c] p-8 rounded-3xl border border-white/5 hover:border-brand-blue/50 transition-all duration-300 group cursor-pointer shadow-xl hover:shadow-brand-blue/10">
             <div className="w-14 h-14 bg-brand-blue/20 rounded-2xl flex items-center justify-center mb-6 text-brand-blue group-hover:scale-110 transition-transform">
               <Activity className="w-7 h-7" />
             </div>
-            <h3 className="text-2xl font-bold mb-3">Payment Priority</h3>
-            <p className="text-gray-400 mb-8 leading-relaxed">
-              Model your short-term liquidity state, detect upcoming obligation conflicts, and generate prioritized action plans.
+            <h3 className="text-xl font-bold mb-3">Launch Simulator</h3>
+            <p className="text-gray-400 mb-8 text-sm leading-relaxed h-12">
+              Generate AI-prioritized payment action plans based on current liquidity.
             </p>
             <Button 
               variant="primary" 
-              className="group-hover:bg-[#0051cc]" 
+              className="group-hover:bg-[#0051cc] w-full" 
               onClick={handleSimulate}
               disabled={simulating}
             >
-              {simulating ? 'Analyzing Data...' : 'Launch Simulator'}
+              {simulating ? 'Analyzing...' : 'Run Analysis'}
             </Button>
+          </div>
+
+          {/* New Relationship Dashboard Card */}
+          <div className="bg-gradient-to-br from-[#1e1e1e] to-[#2c2c2c] p-8 rounded-3xl border border-white/5 hover:border-green-400/50 transition-all duration-300 group cursor-pointer shadow-xl hover:shadow-green-400/10">
+            <div className="w-14 h-14 bg-green-400/20 rounded-2xl flex items-center justify-center mb-6 text-green-400 group-hover:scale-110 transition-transform">
+              <ShieldCheck className="w-7 h-7" />
+            </div>
+            <h3 className="text-xl font-bold mb-3">Trust Intelligence</h3>
+            <p className="text-gray-400 mb-8 text-sm leading-relaxed h-12">
+              Monitor vendor health scores and track your relationship status history.
+            </p>
+            <Link to="/relationships" className="block w-full">
+              <button className="w-full py-2.5 px-4 rounded-xl font-bold transition duration-200 uppercase tracking-widest text-[10px] bg-green-600 hover:bg-green-700 text-white shadow-md">
+                View Health Grid
+              </button>
+            </Link>
           </div>
 
           {/* Negotiation Simulation Card */}
@@ -199,13 +215,15 @@ export default function Dashboard() {
             <div className="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 text-purple-400 group-hover:scale-110 transition-transform">
               <MessageSquare className="w-7 h-7" />
             </div>
-            <h3 className="text-2xl font-bold mb-3">Negotiation Simulation</h3>
-            <p className="text-gray-400 mb-8 leading-relaxed">
-              Rehearse payment deferrals with AI role-playing your actual counterparties based on past relationship history.
+            <h3 className="text-xl font-bold mb-3">AI Negotiator</h3>
+            <p className="text-gray-400 mb-8 text-sm leading-relaxed h-12">
+              Rehearse payment deferrals with AI role-playing your actual counterparties.
             </p>
-            <button className="w-full py-3 px-4 rounded-md font-semibold transition duration-200 uppercase tracking-wide text-sm bg-purple-600 hover:bg-purple-700 text-white shadow-md">
-              Start Negotiation
-            </button>
+            <Link to="/negotiate" className="block w-full">
+              <button className="w-full py-2.5 px-4 rounded-xl font-bold transition duration-200 uppercase tracking-widest text-[10px] bg-purple-600 hover:bg-purple-700 text-white shadow-md">
+                Start Simulation
+              </button>
+            </Link>
           </div>
         </div>
 
@@ -260,10 +278,18 @@ export default function Dashboard() {
                       </div>
                       <div>
                         <p className="text-white font-semibold text-lg">{o.name}</p>
-                        <p className="text-xs text-gray-400 mt-1 flex items-center space-x-2">
+                        <p className="text-xs text-gray-400 mt-1 flex flex-wrap items-center gap-2">
                            <span>Due: <span className="text-gray-300 font-medium">{new Date(o.due_date).toLocaleDateString()}</span></span>
                            <span className="text-gray-600">•</span>
                            <span>Penalty: <span className="text-gray-300">{o.penalty || 0}</span></span>
+                           <span className="text-gray-600">•</span>
+                           <span className={`px-2 py-0.5 rounded-full border text-[9px] uppercase font-bold tracking-tighter ${
+                             o.relationship_status === 'strong' ? 'text-green-400 border-green-400/20 bg-green-400/5' : 
+                             o.relationship_status === 'neutral' ? 'text-blue-400 border-blue-400/20 bg-blue-400/5' : 
+                             'text-red-400 border-red-400/20 bg-red-400/5'
+                           }`}>
+                             {o.relationship_status} relationship
+                           </span>
                         </p>
                       </div>
                     </div>

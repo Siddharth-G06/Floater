@@ -1,6 +1,8 @@
 {
   "scripts": {
-    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "node backend/src/index.js",
     "start": "concurrently \"npm start --prefix backend\" \"npm run build --prefix frontend && npm run preview --prefix frontend\""
   },
   "devDependencies": {
@@ -11,6 +13,7 @@
     "tailwindcss": "^4.2.2"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.100.0",
     "lucide-react": "^1.6.0"
   }
 }

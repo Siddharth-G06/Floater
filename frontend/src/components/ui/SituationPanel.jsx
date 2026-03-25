@@ -74,6 +74,12 @@ export default function SituationPanel({ onApplyScenario, activeScenarioId, isSi
                 />
             </div>
             <button 
+                onClick={() => onApplyScenario({
+                  id: 'custom-catastrophe',
+                  label: 'Severe Continuity Threat (-₹50,000)',
+                  icon: <AlertTriangle className="w-4 h-4 text-red-500" />,
+                  effect: { type: 'balance_reduction', value: 50000, description: 'Extreme liquidity crunch simulation' }
+                })}
                 className="bg-brand-blue hover:bg-[#0051cc] text-white px-6 py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
                 disabled={isSimulating}
             >

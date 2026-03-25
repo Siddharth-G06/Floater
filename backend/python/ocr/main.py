@@ -2,8 +2,9 @@ import sys
 import os
 import json
 
-# Fix import path
+# Fix import paths
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from ocr import extract_receipt_from_image
 

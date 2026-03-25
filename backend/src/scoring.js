@@ -1,4 +1,4 @@
-// backend/scoring.js
+import { relationshipEngine } from './relationshipEngine.js';
 
 /**
  * Calculate priority score for a single obligation
@@ -15,26 +15,28 @@ export function computePriority(obligation, currentBalance, today = new Date()) 
     const urgency = 1 / (daysToDue + 1);
 
     // 3. Penalty Normalization (0 to 1 scale)
-    // The UI sends 1000 (High), 500 (Medium), 100 (Low). We normalize this.
     const rawPenalty = parseFloat(obligation.penalty) || 0;
     const penaltyNormalized = Math.min(1.0, rawPenalty / 1000.0);
 
     // 4. Flexibility 
-    // Higher flexibility -> easier to delay. We want opposite effect (1 - flexibility)
     const flexibility = 1 - parseFloat(obligation.flexibility_score || 0.5);
 
-    // 5. Importance
+    // 5. Importance (Relationship Weight)
     let importance = 0.5;
     const relImp = obligation.relationship_importance;
     if (relImp === 'high') importance = 1.0;
     else if (relImp === 'low') importance = 0.1;
 
+    // 🆕 RELATIONSHIP ENGINE INTEGRATION
+    // Get the risk multiplier based on history (sensitive → 1.5 multiplier)
+    const riskMultiplier = relationshipEngine.getRiskMultiplier(obligation.name || obligation.vendor_name);
+
     // 6. Cash Impact
     const amount = parseFloat(obligation.amount) || 0;
     const impact = amount / Math.max(1, currentBalance);
 
-    // 7. Weighted Score
-    const score = (
+    // 7. Weighted Base Score
+    const baseScore = (
         0.30 * urgency +        // urgency is most important
         0.25 * penaltyNormalized + // penalty is second
         0.20 * flexibility +    // low flexibility -> higher score
@@ -42,7 +44,8 @@ export function computePriority(obligation, currentBalance, today = new Date()) 
         0.10 * impact           // financial impact
     );
 
-    return score;
+    // 8. Adjusted Priority (Final Score)
+    return baseScore * riskMultiplier;
 }
 
 /**
@@ -52,7 +55,8 @@ export function scoreAllObligations(balance, obligations, today = new Date()) {
     const scoredObligations = obligations.map(o => {
         return {
             ...o,
-            priority_score: computePriority(o, balance, today)
+            priority_score: computePriority(o, balance, today),
+            relationship_status: relationshipEngine.getStatus(o.name || o.vendor_name)
         };
     });
 
