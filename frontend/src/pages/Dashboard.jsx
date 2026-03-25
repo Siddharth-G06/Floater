@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { LogOut, Activity, MessageSquare, CreditCard } from 'lucide-react';
+import { LogOut, Activity, MessageSquare, CreditCard, ReceiptText } from 'lucide-react';
 import Button from '../components/ui/Button';
 import AddPaymentForm from '../components/forms/AddPaymentForm';
+import DocumentUpload from '../components/forms/DocumentUpload';
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -105,19 +106,7 @@ export default function Dashboard() {
             <AddPaymentForm />
           </div>
           <div className="lg:col-span-1">
-            <div className="bg-gradient-to-br from-[#1e1e1e] to-[#2c2c2c] p-6 lg:p-8 rounded-2xl border border-white/5 shadow-xl h-full flex flex-col justify-center">
-               <div className="bg-blue-500/10 p-4 rounded-xl border border-blue-500/20 mb-6">
-                 <h4 className="text-blue-400 font-semibold mb-1">Why add obligations?</h4>
-                 <p className="text-sm text-gray-300">
-                   Floater needs to know your upcoming bills to accurately calculate your 'Days-to-Zero' liquidity runway.
-                 </p>
-               </div>
-               <div className="text-center">
-                 <p className="text-gray-400 text-sm italic">
-                   Upcoming payment insights will populate here once you've seeded your data.
-                 </p>
-               </div>
-            </div>
+            <DocumentUpload />
           </div>
         </div>
       </div>
