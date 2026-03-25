@@ -6,6 +6,7 @@ import { execFile } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { scoreAllObligations } from './scoring.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -57,6 +58,26 @@ app.post('/api/ocr', upload.single('receipt'), (req, res) => {
         res.status(500).json({ error: 'Invalid OCR response format.' });
     }
   });
+});
+
+// New endpoint: Situation Simulation (Scoring)
+app.post('/api/score', (req, res) => {
+  const { balance, obligations } = req.body;
+  
+  if (balance === undefined || !Array.isArray(obligations)) {
+    return res.status(400).json({ error: 'Please provide current balance and an array of obligations.' });
+  }
+
+  try {
+    const sortedObligations = scoreAllObligations(balance, obligations);
+    res.json({ 
+      success: true, 
+      scored_obligations: sortedObligations
+    });
+  } catch (err) {
+    console.error('Scoring error:', err);
+    res.status(500).json({ error: 'Failed to process scoring algorithm.' });
+  }
 });
 
 app.listen(PORT, () => {

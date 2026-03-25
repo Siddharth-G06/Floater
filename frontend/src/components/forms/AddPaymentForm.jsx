@@ -10,10 +10,11 @@ export default function AddPaymentForm({ onSuccess }) {
     amount: '',
     dueDate: '',
     paymentType: '',
-    delayed: 'No',
+    flexibilityLevel: '0.2',
     impact: 'Low',
     isMsme: false,
-    recurring: false
+    recurring: false,
+    recurringInterval: 'Monthly'
   });
   
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -25,13 +26,15 @@ export default function AddPaymentForm({ onSuccess }) {
     if (formData.paymentType === 'Rent' || formData.paymentType === 'Salary') {
       setFormData(prev => ({
         ...prev,
-        delayed: 'No',
+        flexibilityLevel: '0.2',
         impact: 'High',
-        recurring: true // bonus recurring suggestion
+        recurring: true,
+        recurringInterval: 'Monthly'
       }));
     } else if (formData.paymentType === 'Vendor') {
       setFormData(prev => ({
         ...prev,
+        flexibilityLevel: '0.5',
         impact: 'Medium'
       }));
     }
@@ -62,7 +65,7 @@ export default function AddPaymentForm({ onSuccess }) {
       relationship_importance = 'medium';
     }
 
-    const flexibility_score = formData.delayed === 'Yes' ? 0.7 : 0.2;
+    const flexibility_score = parseFloat(formData.flexibilityLevel);
 
     let penalty = 100;
     if (formData.impact === 'High') penalty = 1000;
@@ -102,7 +105,7 @@ export default function AddPaymentForm({ onSuccess }) {
       setMessage('success');
       setFormData({
         name: '', amount: '', dueDate: '', paymentType: '',
-        delayed: 'No', impact: 'Low', isMsme: false, recurring: false
+        flexibilityLevel: '0.2', impact: 'Low', isMsme: false, recurring: false, recurringInterval: 'Monthly'
       });
       setShowAdvanced(false);
       
@@ -158,19 +161,31 @@ export default function AddPaymentForm({ onSuccess }) {
           />
         </div>
 
-        {/* Suggestion for Rent/Salary */}
-        {(formData.paymentType === 'Rent' || formData.paymentType === 'Salary') && (
-          <div className="flex items-center space-x-3 p-3 bg-brand-blue/10 rounded-lg border border-brand-blue/20 mt-2">
-            <input 
-              type="checkbox" id="recurring" 
-              checked={formData.recurring} onChange={handleChange}
-              className="w-4 h-4 text-brand-blue bg-transparent border-gray-600 rounded focus:ring-brand-blue"
-            />
-            <label htmlFor="recurring" className="text-sm text-brand-blue font-medium cursor-pointer">
-              Set as a recurring monthly payment
-            </label>
-          </div>
-        )}
+        {/* Recurring Payment Feature */}
+        <div className="flex items-center p-3 bg-brand-blue/10 rounded-lg border border-brand-blue/20 mt-2">
+          <input 
+            type="checkbox" id="recurring" 
+            checked={formData.recurring} onChange={handleChange}
+            className="w-4 h-4 text-brand-blue bg-transparent border-gray-600 rounded focus:ring-brand-blue"
+          />
+          <label htmlFor="recurring" className="text-sm text-brand-blue font-medium cursor-pointer ml-3 flex-1">
+            Is this a recurring payment?
+          </label>
+          
+          {formData.recurring && (
+            <select 
+              id="recurringInterval"
+              value={formData.recurringInterval}
+              onChange={handleChange}
+              className="bg-[#2c2c2c] text-brand-blue font-medium text-sm border border-brand-blue/30 rounded-md p-1.5 px-3 outline-none focus:border-brand-blue cursor-pointer"
+            >
+              <option value="Weekly">Weekly</option>
+              <option value="Bi-weekly">Bi-weekly</option>
+              <option value="Monthly">Monthly</option>
+              <option value="Annually">Annually</option>
+            </select>
+          )}
+        </div>
 
         <button 
           type="button" 
@@ -182,25 +197,19 @@ export default function AddPaymentForm({ onSuccess }) {
 
         {showAdvanced && (
           <div className="space-y-5 p-5 bg-[#252525] rounded-xl border border-white/5 animate-fade-in">
-            <div className="flex flex-col space-y-2">
-              <span className="text-sm text-gray-400">Can this payment be delayed?</span>
-              <div className="flex space-x-4">
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input type="radio" name="delayed" id="delayed" value="Yes" 
-                    checked={formData.delayed === 'Yes'} onChange={handleChange} 
-                    className="text-brand-blue focus:ring-brand-blue bg-[#2c2c2c] border-gray-600" />
-                  <span className="text-sm text-white">Yes</span>
-                </label>
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input type="radio" name="delayed" id="delayed" value="No" 
-                    checked={formData.delayed === 'No'} onChange={handleChange} 
-                    className="text-brand-blue focus:ring-brand-blue bg-[#2c2c2c] border-gray-600" />
-                  <span className="text-sm text-white">No</span>
-                </label>
-              </div>
-            </div>
+            
+            <Select 
+              label="Flexibility with counterparty" id="flexibilityLevel"
+              options={[
+                { value: '0.2', label: 'Strict (No delays allowed)' },
+                { value: '0.5', label: 'Moderate (A few days grace)' },
+                { value: '0.8', label: 'Flexible (Open terms)' },
+                { value: '1.0', label: 'Highly Flexible (Friendly)' },
+              ]}
+              value={formData.flexibilityLevel} onChange={handleChange}
+            />
 
-            {formData.delayed === 'Yes' && (
+            {parseFloat(formData.flexibilityLevel) > 0.2 && (
               <Select 
                 label="If delayed, what is the impact?" id="impact"
                 options={[
