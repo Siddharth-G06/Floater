@@ -61,30 +61,22 @@ export default function DocumentUpload() {
     setUploadStatus('uploading');
     
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('receipt', file); // Field name must match backend Multer setting
 
     try {
-      // TODO: Replace this URL with your actual backend OCR endpoint URL
-      /*
-      const response = await fetch('http://localhost:8000/api/ocr/process', {
+      const response = await fetch('http://localhost:5000/api/ocr', {
         method: 'POST',
         body: formData,
       });
       
       if (!response.ok) throw new Error('OCR Processing failed');
       const data = await response.json();
-      */
 
-      // Simulating backend OCR processing delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const mockData = {
-        vendor: "Extracted Vendor Name",
-        amount: "₹4,500",
-        date: "2024-03-15"
-      };
-
-      setOcrResult(mockData);
+      setOcrResult({
+        vendor: data.vendor_name || "Unknown Vendor",
+        amount: data.amount ? `₹${data.amount.toLocaleString()}` : "Not detected",
+        date: data.date || "Unknown Date"
+      });
       setUploadStatus('success');
     } catch (error) {
       console.error(error);
