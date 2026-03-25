@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/layout/AuthLayout';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
@@ -13,6 +13,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.id]: e.target.value }));
@@ -33,7 +34,7 @@ export default function Login() {
       setErrorMsg(error.message);
     } else {
       setSuccessMsg('Login successful! Redirecting to dashboard...');
-      // Navigation will go here later
+      setTimeout(() => navigate('/dashboard'), 1000);
     }
     setLoading(false);
   };
@@ -54,7 +55,7 @@ export default function Login() {
           Welcome back
         </h2>
         <p className="text-gray-400 mb-8 text-sm">
-          Login to your CashPilot account
+          Login to your Floater account
         </p>
 
         {errorMsg && (
@@ -103,7 +104,7 @@ export default function Login() {
 
         <div className="mt-8 text-center bg-[#2c2c2c] p-4 rounded-xl border border-gray-700/50 flex flex-col items-center">
           <p className="text-sm text-gray-400">
-            Only authorized CashPilot admins will assist you
+            Only authorized Floater admins will assist you
           </p>
         </div>
 

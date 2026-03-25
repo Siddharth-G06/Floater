@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/layout/AuthLayout';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
@@ -18,6 +18,7 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.id]: e.target.value }));
@@ -45,7 +46,8 @@ export default function SignUp() {
     if (error) {
       setErrorMsg(error.message);
     } else {
-      setSuccessMsg('Account created successfully! You can now log in.');
+      setSuccessMsg('Account created successfully! Redirecting to dashboard...');
+      setTimeout(() => navigate('/dashboard'), 1500);
     }
     setLoading(false);
   };
@@ -72,7 +74,7 @@ export default function SignUp() {
           Create Account
         </h2>
         <p className="text-gray-400 mb-8 text-sm">
-          Get started with CashPilot today
+          Get started with Floater today
         </p>
 
         {errorMsg && (
