@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import multer from 'multer';
-import { execFile } from 'child_process';
+import { execFile, spawn } from 'child_process';
 import { createClient } from '@supabase/supabase-js';
 import path from 'path';
 import fs from 'fs';
@@ -148,11 +148,40 @@ app.post('/api/negotiate', async (req, res) => {
   }
 });
 
-import { spawn } from 'child_process';
+app.post('/api/analyze-leverage', async (req, res) => {
+  const { vendors } = req.body;
+  if (!Array.isArray(vendors)) return res.status(400).json({ error: 'Missing vendor list.' });
+
+  const scriptPath = path.join(__dirname, '..', 'python', 'generator', 'analyze_leverage.py');
+  const inputData = JSON.stringify({ vendors });
+
+  try {
+     const pythonProcess = spawn('python', [scriptPath]);
+     let stdoutData = '';
+     let stderrData = '';
+
+     pythonProcess.stdin.write(inputData);
+     pythonProcess.stdin.end();
+
+     pythonProcess.stdout.on('data', (data) => { stdoutData += data.toString(); });
+     pythonProcess.stderr.on('data', (data) => { stderrData += data.toString(); });
+
+     pythonProcess.on('close', (code) => {
+        if (code !== 0) return res.status(500).json({ error: 'Analysis script failed.' });
+        try {
+           const result = JSON.parse(stdoutData.trim());
+           res.json(result);
+        } catch (err) {
+           res.status(500).json({ error: 'Processing error.' });
+        }
+     });
+  } catch (err) {
+    res.status(500).json({ error: 'Setup error.' });
+  }
+});
 
 app.post('/api/generate-email', async (req, res) => {
   const { vendor_name, amount, due_date, mode, strategy } = req.body;
-
   if (!vendor_name) return res.status(400).json({ error: 'Missing vendor name.' });
 
   const scriptPath = path.join(__dirname, '..', 'python', 'generator', 'mail_cli.py');
@@ -166,36 +195,20 @@ app.post('/api/generate-email', async (req, res) => {
      pythonProcess.stdin.write(inputData);
      pythonProcess.stdin.end();
 
-     pythonProcess.stdout.on('data', (data) => {
-        stdoutData += data.toString();
-     });
-
-     pythonProcess.stderr.on('data', (data) => {
-        stderrData += data.toString();
-     });
+     pythonProcess.stdout.on('data', (data) => { stdoutData += data.toString(); });
+     pythonProcess.stderr.on('data', (data) => { stderrData += data.toString(); });
 
      pythonProcess.on('close', (code) => {
-        if (code !== 0) {
-           console.error('Python Error (spawn code !== 0):', stderrData);
-           return res.status(500).json({ error: 'AI script failed.' });
-        }
-
+        if (code !== 0) return res.status(500).json({ error: 'AI script failed.' });
         try {
            const result = JSON.parse(stdoutData.trim());
-           if (result.success) {
-              res.json({ success: true, email: result.email });
-           } else {
-              res.status(500).json({ error: result.error });
-           }
+           res.json(result);
         } catch (err) {
-           console.error('JSON parse error from python STDOUT:', err, stdoutData);
-           res.status(500).json({ error: 'Failed to process AI response.' });
+           res.status(500).json({ error: 'Processing error.' });
         }
      });
-
   } catch (err) {
-    console.error('Execution setup error:', err);
-    res.status(500).json({ error: 'AI generation engine failed.' });
+    res.status(500).json({ error: 'Setup error.' });
   }
 });
 
