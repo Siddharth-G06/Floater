@@ -55,19 +55,62 @@ Project Floater analyzes financial obligations and produces an **AI Payment Acti
 
 ---
 
-## 🔄 System Architecture
+## 🔄 System Flow (Detailed)
 
 ```mermaid
 flowchart TD
-    A[Upload Data] --> B[OCR / CSV Parsing]
-    B --> C[Transaction Structuring]
-    C --> D[Relationship Engine]
-    C --> E[Mode Engine]
-    D --> F[Priority Scoring]
-    E --> F
-    F --> G[Negotiation Engine]
-    G --> H[LLaMA 3 Mail Generator]
-    H --> I[Final Dashboard Output]
+
+    %% ---------------- INPUT ----------------
+    A[User Uploads Data] --> B1[CSV Parser]
+    A --> B2[OCR Engine]
+
+    B1 --> C[Transaction Structuring]
+    B2 --> C
+
+    %% ---------------- CORE STATE ----------------
+    C --> D[Financial State Builder]
+    D --> E[Obligations + Cash Position]
+
+    %% ---------------- ENGINES ----------------
+    E --> F1[Relationship Engine]
+    E --> F2[Mode Engine]
+
+    %% Relationship Engine Outputs
+    F1 --> F1A[Vendor Score]
+    F1 --> F1B[Relationship Status]
+
+    %% Mode Engine Outputs
+    F2 --> F2A[Stable / Caution / Emergency]
+
+    %% ---------------- DECISION ----------------
+    F1A --> G[Decision Engine]
+    F1B --> G
+    F2A --> G
+    E --> G
+
+    G --> G1[Priority Scoring]
+    G --> G2[Pay / Delay / Partial Pay]
+
+    %% ---------------- NEGOTIATION ----------------
+    G2 --> H[Negotiation Engine]
+
+    H --> H1[Strategy Selection]
+    H --> H2[Tone Selection]
+    H --> H3[Urgency Level]
+
+    %% ---------------- OUTPUT ----------------
+    H --> I[Email Generator]
+
+    I --> J[Generated Vendor Emails]
+    G --> K[AI Payment Action Plan UI]
+
+    %% ---------------- FEEDBACK LOOP ----------------
+    J --> L[Payment Outcome]
+    K --> L
+
+    L --> M[Relationship Engine Update]
+
+    M --> F1
 ```
 
 ---
