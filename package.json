@@ -2,7 +2,7 @@
   "scripts": {
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "cd frontend && npm run dev",
-    "dev:backend": "node backend/src/index.js",
+    "dev:backend": "npx nodemon backend/src/index.js",
     "start": "concurrently \"npm start --prefix backend\" \"npm run build --prefix frontend && npm run preview --prefix frontend\""
   },
   "devDependencies": {

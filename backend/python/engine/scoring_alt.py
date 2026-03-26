@@ -1,108 +1,110 @@
 from datetime import datetime
 
 # -------------------------------------------------
+# HELPER: CLAMP FUNCTION
+# Ensures values stay between 0 and 1
+# -------------------------------------------------
+def clamp(x):
+    return max(0.0, min(1.0, x))
+
+
+# -------------------------------------------------
 # FUNCTION: compute_priority
 # PURPOSE:
 # Calculate priority score for a single obligation
 # -------------------------------------------------
-
 def compute_priority(obligation, current_balance, today):
-    
+
     # ---------------------------------------------
-    # STEP 1: CALCULATE DAYS LEFT UNTIL DUE DATE
+    # STEP 1: DAYS TO DUE
     # ---------------------------------------------
-    # (due_date - today) gives time difference
-    # .days converts it into number of days
     days_to_due = (obligation["due_date"] - today).days
 
-    # ---------------------------------------------
-    # STEP 2: CALCULATE URGENCY
-    # ---------------------------------------------
-    # Formula:
-    # urgency = 1 / (days_to_due + 1)
-    # 
-    # Why +1?
-    # → avoid division by zero when due today
-    # 
-    # Meaning:
-    # - closer due date → higher urgency
-    # - far due date → lower urgency
-    urgency = 1 / (days_to_due + 1)
+    if days_to_due < 0:
+        urgency = 1.0   # overdue → highest urgency
+    else:
+        urgency = 1 / (days_to_due + 1)
+
+    urgency = clamp(urgency)
 
     # ---------------------------------------------
-    # STEP 3: PENALTY
+    # STEP 2: PENALTY
     # ---------------------------------------------
-    # Already provided (0 to 1 scale)
-    # Higher value → more dangerous to delay
-    penalty = obligation["penalty"]
+    # Expected penalty is raw number, clamp ensures it stays 0 to 1
+    # Note: If penalty was on 0-1000 scale, normalize it before clamp
+    penalty = clamp(obligation.get("penalty", 0))
 
     # ---------------------------------------------
-    # STEP 4: FLEXIBILITY
+    # STEP 3: FLEXIBILITY
     # ---------------------------------------------
-    # Higher flexibility → easier to delay
-    # But we want opposite effect:
-    # So we use (1 - flexibility)
-    flexibility = 1 - obligation["flexibility"]
+    raw_flex = clamp(obligation.get("flexibility_score", obligation.get("flexibility", 0.5)))
+    flexibility = 1 - raw_flex   # invert (low flexibility → high priority)
+    flexibility = clamp(flexibility)
 
     # ---------------------------------------------
-    # STEP 5: IMPORTANCE
+    # STEP 4: RELATIONSHIP IMPORTANCE
     # ---------------------------------------------
-    # Represents relationship importance
-    # Example:
-    # Salary → 1.0 (highest)
-    # Vendor → 0.5
-    importance = obligation["importance"]
+    importance_map = {
+        "high": 1.0,
+        "medium": 0.5,
+        "low": 0.2
+    }
+
+    rel_input = obligation.get("relationship_importance", "low")
+    rel_score = importance_map.get(str(rel_input).lower(), 0.2)
+    rel_score = clamp(rel_score)
 
     # ---------------------------------------------
-    # STEP 6: CASH IMPACT
+    # STEP 5: CASH IMPACT
     # ---------------------------------------------
-    # How big is this payment relative to balance?
-    # Example:
-    # 20k / 30k = 0.66 → high impact
-    impact = obligation["amount"] / current_balance
+    # safer normalization
+    if current_balance <= 0:
+        impact = 1.0
+    else:
+        impact = obligation["amount"] / (current_balance + obligation["amount"])
+
+    impact = clamp(impact)
 
     # ---------------------------------------------
-    # STEP 7: WEIGHTED SCORE
+    # STEP 6: FINAL SCORE
     # ---------------------------------------------
-    # Combine all features into one score
-    # These weights are tuned for balance
     score = (
-        0.30 * urgency +        # urgency is most important
-        0.25 * penalty +        # penalty is second
-        0.20 * flexibility +    # low flexibility → higher score
-        0.15 * importance +     # relationship importance
-        0.10 * impact           # financial impact
+        0.30 * urgency +
+        0.25 * penalty +
+        0.20 * flexibility +
+        0.15 * rel_score +
+        0.10 * impact
     )
 
-    # ---------------------------------------------
-    # STEP 8: RETURN SCORE
-    # ---------------------------------------------
-    return score
+    # Ensure no negative score
+    score = max(0.0, score)
+
+    return round(score, 4)
 
 
 # -------------------------------------------------
 # FUNCTION: score_all_obligations
 # PURPOSE:
-# Compute score for all obligations and attach it
+# Compute score for all obligations and sort
 # -------------------------------------------------
-
 def score_all_obligations(financial_state):
 
-    # Extract values from state
     balance = financial_state["balance"]
     obligations = financial_state["obligations"]
     today = financial_state["today"]
 
-    # Loop through each obligation
     for o in obligations:
-        
-        # Compute score using function above
+
+        # Ensure required keys exist
+        if "due_date" not in o:
+            raise ValueError(f"Missing due_date in obligation: {o}")
+
+        if "amount" not in o:
+            raise ValueError(f"Missing amount in obligation: {o}")
+
         o["score"] = compute_priority(o, balance, today)
 
-    # ---------------------------------------------
-    # STEP 9: SORT OBLIGATIONS BY SCORE
-    # ---------------------------------------------
-    # Highest score → highest priority
+    # Sort: highest score first
     obligations.sort(key=lambda x: x["score"], reverse=True)
 
     return obligations
